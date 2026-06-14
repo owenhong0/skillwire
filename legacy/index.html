@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skillwire — skills &amp; repos</title>
+<meta name="description" content="A highlight of popular, talked-about Claude skills and repos. We highlight, we don't audit — check the source before installing.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="banner">
+  <div class="banner-inner">
+    <div class="wordmark">Skill<span>wire</span></div>
+    <p class="banner-note"><b>We highlight, we don't audit.</b> Picks are based on public activity, not a security review — check the source before you install anything.</p>
+  </div>
+</header>
+
+<main>
+  <nav class="nav" aria-label="Sections">
+    <button data-view="skills" aria-current="true">Skills <span class="count" id="count-skills"></span></button>
+    <button data-view="repos">Repos <span class="count" id="count-repos"></span></button>
+  </nav>
+
+  <div class="search">
+    <svg class="glass" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M13 13l4 4"/></svg>
+    <input id="q" type="search" autocomplete="off" aria-label="Search" placeholder="Search by name or function — try 'pdf', 'database', 'automation'">
+    <button class="clear" id="clear" aria-label="Clear search"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3l10 10M13 3L3 13"/></svg></button>
+  </div>
+
+  <p class="resultline" id="resultline"></p>
+  <div id="grid"></div>
+</main>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
