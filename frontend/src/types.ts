@@ -15,6 +15,10 @@ export interface Repo {
   license?: { spdx_id?: string | null } | null
 }
 
+export interface RepoDetail extends Repo {
+  readme_paras: string[]
+}
+
 export type CatId = 'skill' | 'mcp' | 'web' | 'data' | 'agent' | 'cli'
 
 export interface Cat {
@@ -26,6 +30,18 @@ export interface Section {
   id: string
   label: string
   query: string
+}
+
+export interface Article {
+  id: string
+  title: string
+  url: string
+  source: string
+  author?: string | null
+  score?: number | null
+  comments?: number | null
+  published_at?: string | null
+  summary?: string | null
 }
 
 export type View = 'trending' | 'discover' | 'learn'

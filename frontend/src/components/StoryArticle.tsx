@@ -1,14 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { Repo, CatId } from '../types'
-import {
-  getRepo,
-  getReadmeParas,
-  NotFoundError,
-  fmtNum,
-  ago,
-  titleize,
-  catLabel,
-} from '../lib/github'
+import { getRepoDetail, NotFoundError, fmtNum, ago, titleize, catLabel } from '../lib/github'
 import Motif from './Motif'
 import { NewsState, Sk } from './news'
 import {
@@ -40,11 +32,11 @@ export default function StoryArticle({
   useEffect(() => {
     const controller = new AbortController()
     setSt({ kind: 'loading' })
-    getRepo(repo, controller.signal)
-      .then(async (r) => {
-        const paras = await getReadmeParas(repo, controller.signal)
+    getRepoDetail(repo, controller.signal)
+      .then((detail) => {
         if (controller.signal.aborted) return
-        setSt({ kind: 'ok', r, paras })
+        const { readme_paras, ...r } = detail
+        setSt({ kind: 'ok', r, paras: readme_paras })
       })
       .catch((e: unknown) => {
         if (controller.signal.aborted) return

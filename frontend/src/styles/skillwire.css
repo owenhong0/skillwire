@@ -82,6 +82,10 @@ a { color: inherit; }
 /* clickable elements rendered as <a>/<div> without href */
 .brand, .story-lead h2 a, .readmore, .story-card, .brief, .crumb { cursor: pointer; }
 
+/* Headlines rail notes (empty / error / no-backend states) */
+.rail-note { font: 400 13.5px/1.55 var(--serif-body); color: var(--ink-soft); padding: 14px 0; }
+.rail-note code { font: 12px var(--font-mono); background: var(--paper-2); border: 1px solid var(--rule); padding: 1px 5px; border-radius: 4px; }
+
 /* Learn page footer note */
 .learn-footer { border-top: 1px solid var(--rule); margin-top: 44px; padding-top: 22px; font: 400 14px/1.6 var(--serif-body); color: var(--ink-faint); max-width: 70ch; }
 

@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: skillwire-dispatch
+    runtime: python
+    rootDir: backend
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      # All optional — the API works fully keyless. Set in the Render dashboard.
+      - key: GITHUB_TOKEN      # raises GitHub rate limits (60/hr → 5000/hr)
+        sync: false
+      - key: NEWS_API_KEY      # optional: adds NewsAPI as an article source
+        sync: false
+      - key: ALLOWED_ORIGINS   # CORS allowlist for the frontend
+        value: https://owenhong0.github.io

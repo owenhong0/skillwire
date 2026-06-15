@@ -4,6 +4,7 @@ import { SECTIONS, searchRepos, fmtNum, ago, titleize, kindToCat } from '../lib/
 import Masthead from './Masthead'
 import Motif from './Motif'
 import StoryCard from './StoryCard'
+import Headlines from './Headlines'
 import { NewsState, Sk } from './news'
 import { ArrowIcon } from './Icons'
 
@@ -79,8 +80,7 @@ export default function Trending({ onOpen }: { onOpen: Open }) {
 
 function Front({ items, onOpen }: { items: Repo[]; onOpen: Open }) {
   const lead = items[0]
-  const secondary = items.slice(1, 3)
-  const briefs = items.slice(3, 8)
+  const secondary = items.slice(1, 4)
   return (
     <div className="front">
       <div className="lead">
@@ -93,12 +93,7 @@ function Front({ items, onOpen }: { items: Repo[]; onOpen: Open }) {
           </div>
         )}
       </div>
-      <aside className="rail">
-        <h4>Most starred this section</h4>
-        {briefs.map((r, i) => (
-          <Brief key={r.full_name} r={r} i={i} onOpen={onOpen} />
-        ))}
-      </aside>
+      <Headlines />
     </div>
   )
 }
@@ -136,22 +131,6 @@ function Lead({ r, onOpen }: { r: Repo; onOpen: Open }) {
         Read the full story <ArrowIcon />
       </a>
     </div>
-  )
-}
-
-function Brief({ r, i, onOpen }: { r: Repo; i: number; onOpen: Open }) {
-  const c = kindToCat(r)
-  return (
-    <a className="brief" onClick={() => onOpen(r.full_name, c.cat)}>
-      <span className="rank">{i + 1}</span>
-      <span>
-        <div className="bt">{titleize(r.name)}</div>
-        <div className="bd">{(r.description || '').slice(0, 90)}</div>
-        <div className="bm">
-          {fmtNum(r.stargazers_count)} ★ · {c.label}
-        </div>
-      </span>
-    </a>
   )
 }
 

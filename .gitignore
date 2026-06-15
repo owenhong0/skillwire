@@ -11,3 +11,16 @@ Thumbs.db
 # node / vite
 node_modules/
 frontend/dist/
+
+# python / backend
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# secrets
+.env
+backend/.env
+frontend/.env
+frontend/.env.production
+frontend/.env.local
