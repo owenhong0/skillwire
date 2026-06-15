@@ -22,5 +22,6 @@ __pycache__/
 .env
 backend/.env
 frontend/.env
-frontend/.env.production
 frontend/.env.local
+# NOTE: frontend/.env.production is intentionally committed — it holds only the
+# public backend URL (VITE_API_BASE), which Vite inlines into the static bundle.

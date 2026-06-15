@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: skillwire-dispatch
+    name: skillwire
     runtime: python
     rootDir: backend
     plan: free
