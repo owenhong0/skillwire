@@ -1,21 +1,20 @@
 import { useState } from 'react'
-import type { CatId } from '../types'
 import useSearch from '../hooks/useSearch'
 import StoryCard from './StoryCard'
 import { NewsState, Sk } from './news'
 
-type Open = (repo: string, cat: CatId) => void
+type Open = (repo: string) => void
 
 export default function Discover({ onOpen }: { onOpen: Open }) {
   const [q, setQ] = useState('')
-  const { repos, status, error, search, retry } = useSearch()
+  const { cards, status, error, search, retry } = useSearch()
 
   return (
     <div className="disco">
       <div className="strap">
         <span>Discover</span>
         <span className="grow" />
-        <span>live GitHub search · keyless</span>
+        <span>live search · trust-scored</span>
       </div>
 
       <form
@@ -39,8 +38,8 @@ export default function Discover({ onOpen }: { onOpen: Open }) {
 
       {status === 'idle' && (
         <NewsState title="Search the live catalog">
-          Type a function and hit search. Results are ranked by GitHub stars — we highlight, we don't
-          audit.
+          Type a function and hit search. Results are ranked, trust-checked, and scored — we
+          highlight, we don't audit.
         </NewsState>
       )}
       {status === 'loading' && <DiscoSkeleton />}
@@ -59,8 +58,8 @@ export default function Discover({ onOpen }: { onOpen: Open }) {
       )}
       {status === 'done' && (
         <div className="disco-grid">
-          {repos.map((r) => (
-            <StoryCard key={r.full_name} r={r} onOpen={onOpen} />
+          {cards.map((c) => (
+            <StoryCard key={c.repo} card={c} onOpen={onOpen} />
           ))}
         </div>
       )}

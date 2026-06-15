@@ -7,7 +7,11 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
-      # All optional — the API works fully keyless. Set in the Render dashboard.
+      # Set in the Render dashboard. The API still runs without any of these
+      # (deterministic scoring + keyless GitHub), but ANTHROPIC_API_KEY turns on
+      # the Claude scoring/formatting agents.
+      - key: ANTHROPIC_API_KEY  # enables Claude (claude-sonnet-4-6) score + format
+        sync: false
       - key: GITHUB_TOKEN      # raises GitHub rate limits (60/hr → 5000/hr)
         sync: false
       - key: NEWS_API_KEY      # optional: adds NewsAPI as an article source

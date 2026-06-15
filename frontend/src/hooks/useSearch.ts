@@ -1,18 +1,18 @@
 import { useCallback, useRef, useState } from 'react'
 import { searchRepos, RateLimitError } from '../lib/github'
-import type { Repo } from '../types'
+import type { Card } from '../types'
 
 type Status = 'idle' | 'loading' | 'done' | 'empty' | 'error'
 
 const CACHE_TTL = 10 * 60 * 1000
-const cache = new Map<string, { at: number; repos: Repo[] }>()
+const cache = new Map<string, { at: number; cards: Card[] }>()
 
 const emptyMsg = (q: string) =>
   `Nothing on the wire for “${q}” — try a broader term like “database” or “automation”.`
 
-// Discover search: keyless GitHub query, cached 10 minutes per query.
+// Discover search → enriched Cards from the backend, cached 10 minutes per query.
 export default function useSearch() {
-  const [repos, setRepos] = useState<Repo[]>([])
+  const [cards, setCards] = useState<Card[]>([])
   const [status, setStatus] = useState<Status>('idle')
   const [error, setError] = useState('')
   const abortRef = useRef<AbortController | null>(null)
@@ -25,16 +25,16 @@ export default function useSearch() {
     const { signal } = controller
     lastRef.current = query
 
-    setRepos([])
+    setCards([])
     setError('')
     setStatus('loading')
 
     const key = query.toLowerCase()
     const cached = cache.get(key)
     if (cached && Date.now() - cached.at < CACHE_TTL) {
-      setRepos(cached.repos)
-      setStatus(cached.repos.length ? 'done' : 'empty')
-      if (!cached.repos.length) setError(emptyMsg(query))
+      setCards(cached.cards)
+      setStatus(cached.cards.length ? 'done' : 'empty')
+      if (!cached.cards.length) setError(emptyMsg(query))
       return
     }
 
@@ -45,16 +45,16 @@ export default function useSearch() {
         setError(emptyMsg(query))
         setStatus('empty')
       } else {
-        setRepos(items)
+        setCards(items)
         setStatus('done')
       }
-      cache.set(key, { at: Date.now(), repos: items })
+      cache.set(key, { at: Date.now(), cards: items })
     } catch (e) {
       if (signal.aborted) return
       setError(
         e instanceof RateLimitError
           ? "GitHub's free rate limit kicked in (no key needed — the wire is just busy). Wait a minute and try again."
-          : "Couldn't reach GitHub search. Check your connection and try again.",
+          : "Couldn't reach the search service. Check your connection and try again.",
       )
       setStatus('error')
     }
@@ -65,7 +65,7 @@ export default function useSearch() {
       const q = query.trim()
       if (!q) {
         abortRef.current?.abort()
-        setRepos([])
+        setCards([])
         setError('')
         setStatus('idle')
         lastRef.current = null
@@ -80,5 +80,5 @@ export default function useSearch() {
     if (lastRef.current) run(lastRef.current)
   }, [run])
 
-  return { repos, status, error, search, retry }
+  return { cards, status, error, search, retry }
 }

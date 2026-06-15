@@ -19,6 +19,27 @@ export interface RepoDetail extends Repo {
   readme_paras: string[]
 }
 
+export type Trust = 'verified' | 'unverified' | 'flagged'
+
+export interface Signal {
+  src: string
+  icon: string
+  val: string
+}
+
+// Unified, enriched card the backend returns (matches backend/models.py Card).
+export interface Card {
+  title: string
+  description: string
+  type: 'skill' | 'repo' | 'news'
+  repo: string // github slug ("owner/name") or source URL
+  tags: string[]
+  signals: Signal[]
+  score: number
+  trust: Trust
+  sourceLabel: string
+}
+
 export type CatId = 'skill' | 'mcp' | 'web' | 'data' | 'agent' | 'cli'
 
 export interface Cat {

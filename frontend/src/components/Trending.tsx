@@ -1,19 +1,20 @@
 import { useEffect, useState } from 'react'
-import type { Repo, CatId } from '../types'
-import { SECTIONS, searchRepos, fmtNum, ago, titleize, kindToCat } from '../lib/github'
+import type { Card } from '../types'
+import { SECTIONS, searchRepos, catForCard } from '../lib/github'
 import Masthead from './Masthead'
 import Motif from './Motif'
 import StoryCard from './StoryCard'
 import Headlines from './Headlines'
+import TrustBadge from './TrustBadge'
 import { NewsState, Sk } from './news'
 import { ArrowIcon } from './Icons'
 
 type Status = 'loading' | 'done' | 'empty' | 'error'
-type Open = (repo: string, cat: CatId) => void
+type Open = (repo: string) => void
 
 export default function Trending({ onOpen }: { onOpen: Open }) {
   const [active, setActive] = useState(0)
-  const [items, setItems] = useState<Repo[]>([])
+  const [items, setItems] = useState<Card[]>([])
   const [status, setStatus] = useState<Status>('loading')
   const [count, setCount] = useState('searching the wire…')
 
@@ -31,7 +32,7 @@ export default function Trending({ onOpen }: { onOpen: Open }) {
         }
         setItems(data)
         setStatus('done')
-        setCount(`${data.length} stories · ranked by stars`)
+        setCount(`${data.length} stories · ranked & scored`)
       })
       .catch(() => {
         if (controller.signal.aborted) return
@@ -69,7 +70,7 @@ export default function Trending({ onOpen }: { onOpen: Open }) {
         )}
         {status === 'empty' && (
           <NewsState title="Nothing on the wire">
-            This section came back empty. Try another tab — the newsroom runs on live GitHub activity.
+            This section came back empty. Try another tab — the newsroom runs on live activity.
           </NewsState>
         )}
         {status === 'done' && <Front items={items} onOpen={onOpen} />}
@@ -78,17 +79,17 @@ export default function Trending({ onOpen }: { onOpen: Open }) {
   )
 }
 
-function Front({ items, onOpen }: { items: Repo[]; onOpen: Open }) {
+function Front({ items, onOpen }: { items: Card[]; onOpen: Open }) {
   const lead = items[0]
   const secondary = items.slice(1, 4)
   return (
     <div className="front">
       <div className="lead">
-        <Lead r={lead} onOpen={onOpen} />
+        <Lead card={lead} onOpen={onOpen} />
         {secondary.length > 0 && (
           <div className="secondary">
-            {secondary.map((r) => (
-              <StoryCard key={r.full_name} r={r} onOpen={onOpen} />
+            {secondary.map((c) => (
+              <StoryCard key={c.repo} card={c} onOpen={onOpen} />
             ))}
           </div>
         )}
@@ -98,36 +99,27 @@ function Front({ items, onOpen }: { items: Repo[]; onOpen: Open }) {
   )
 }
 
-function Lead({ r, onOpen }: { r: Repo; onOpen: Open }) {
-  const c = kindToCat(r)
+function Lead({ card, onOpen }: { card: Card; onOpen: Open }) {
   return (
     <div className="story-lead">
-      <span className="kicker">{c.label} · Lead story</span>
+      <span className="kicker">{card.sourceLabel} · Lead story</span>
       <h2>
-        <a onClick={() => onOpen(r.full_name, c.cat)}>{titleize(r.name)}</a>
+        <a onClick={() => onOpen(card.repo)}>{card.title}</a>
       </h2>
       <div className="lead-visual">
         <div className="glyph">
-          <Motif cat={c.cat} />
+          <Motif cat={catForCard(card)} />
         </div>
-        <span className="cap">{r.full_name}</span>
+        <span className="cap">{card.repo}</span>
       </div>
-      <p className="standfirst">
-        {r.description || 'No description provided by the author — open the source to see what it does.'}
-      </p>
+      <p className="standfirst">{card.description}</p>
       <div className="byline">
-        <span>
-          <b>{fmtNum(r.stargazers_count)}</b> ★ stars
-        </span>
-        <span>
-          last commit <b>{ago(r.pushed_at)}</b>
-        </span>
-        {r.language && <span>{r.language}</span>}
-        <span>
-          <b>{fmtNum(r.open_issues_count)}</b> open issues
-        </span>
+        <TrustBadge trust={card.trust} score={card.score} />
+        {card.signals.map((s, i) => (
+          <span key={i}>{s.val}</span>
+        ))}
       </div>
-      <a className="readmore" onClick={() => onOpen(r.full_name, c.cat)}>
+      <a className="readmore" onClick={() => onOpen(card.repo)}>
         Read the full story <ArrowIcon />
       </a>
     </div>

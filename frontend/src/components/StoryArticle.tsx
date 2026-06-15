@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import type { Repo, CatId } from '../types'
-import { getRepoDetail, NotFoundError, fmtNum, ago, titleize, catLabel } from '../lib/github'
+import type { Repo } from '../types'
+import { getRepoDetail, NotFoundError, fmtNum, ago, titleize, catLabel, kindToCat } from '../lib/github'
 import Motif from './Motif'
 import { NewsState, Sk } from './news'
 import {
@@ -18,15 +18,7 @@ type State =
   | { kind: 'notfound' }
   | { kind: 'error' }
 
-export default function StoryArticle({
-  repo,
-  cat,
-  onBack,
-}: {
-  repo: string
-  cat: CatId
-  onBack: () => void
-}) {
+export default function StoryArticle({ repo, onBack }: { repo: string; onBack: () => void }) {
   const [st, setSt] = useState<State>({ kind: 'loading' })
 
   useEffect(() => {
@@ -78,13 +70,14 @@ export default function StoryArticle({
             and refresh.
           </NewsState>
         )}
-        {st.kind === 'ok' && <Dossier r={st.r} paras={st.paras} cat={cat} />}
+        {st.kind === 'ok' && <Dossier r={st.r} paras={st.paras} />}
       </div>
     </article>
   )
 }
 
-function Dossier({ r, paras, cat }: { r: Repo; paras: string[]; cat: CatId }) {
+function Dossier({ r, paras }: { r: Repo; paras: string[] }) {
+  const cat = kindToCat(r).cat
   useEffect(() => {
     document.title = `The Skillwire Dispatch — ${titleize(r.name)}`
     return () => {

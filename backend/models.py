@@ -36,6 +36,25 @@ class RepoDetail(Repo):
     readme_paras: List[str] = []
 
 
+class Signal(BaseModel):
+    src: str
+    icon: str
+    val: str
+
+
+class Card(BaseModel):
+    """Unified, enriched card the frontend renders (trust + score)."""
+    title: str
+    description: str
+    type: str  # "skill" | "repo" | "news"
+    repo: str  # github slug ("owner/name") or source URL
+    tags: List[str] = []
+    signals: List[Signal] = []
+    score: int  # 0-100 rating
+    trust: str  # "verified" | "unverified" | "flagged"
+    sourceLabel: str
+
+
 class Article(BaseModel):
     id: str
     title: str

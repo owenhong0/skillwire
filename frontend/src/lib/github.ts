@@ -1,8 +1,9 @@
-// Data layer. When VITE_API_BASE is set, calls go through the Skillwire Dispatch
-// backend (FastAPI on Render) — which adds the real news feed, server-side
-// caching, and an optional GitHub token. When it's unset (local dev without the
-// backend), repo calls fall back to hitting GitHub directly, keyless, as before.
-import type { Repo, RepoDetail, Article, Cat, CatId, Section } from '../types'
+// Data layer. Talks to the Skillwire Dispatch backend (FastAPI), which now
+// returns enriched, trust-scored Cards. When VITE_API_BASE is unset (local dev
+// without the backend), repo search falls back to direct keyless GitHub and
+// maps raw repos into Cards client-side (no score); the news feed requires the
+// backend.
+import type { Repo, RepoDetail, Card, Cat, CatId, Section } from '../types'
 
 const API_BASE: string = import.meta.env.VITE_API_BASE || ''
 
@@ -41,16 +42,16 @@ function ghRateLimited(res: Response): boolean {
   return res.status === 429 || (res.status === 403 && res.headers.get('X-RateLimit-Remaining') === '0')
 }
 
-// ---- repos: search ----
-export async function searchRepos(query: string, perPage: number, signal?: AbortSignal): Promise<Repo[]> {
+// ---- repos: search → enriched Cards ----
+export async function searchRepos(query: string, perPage: number, signal?: AbortSignal): Promise<Card[]> {
   if (API_BASE) {
     const url = `${API_BASE}/api/repos/search?q=${encodeURIComponent(query)}&per_page=${perPage}`
     const res = await fetch(url, { signal })
     if (res.status === 429) throw new RateLimitError()
     if (!res.ok) throw new Error(`search failed (${res.status})`)
-    return (await res.json()) as Repo[]
+    return (await res.json()) as Card[]
   }
-  // direct GitHub fallback
+  // dev fallback: direct GitHub → map to Cards (no score/trust scoring)
   const q = `${query} in:name,description,readme`
   const url = `${GH_SEARCH}?q=${encodeURIComponent(q)}&sort=stars&order=desc&per_page=${perPage}`
   const res = await fetch(url, { headers: ACCEPT, signal })
@@ -58,10 +59,35 @@ export async function searchRepos(query: string, perPage: number, signal?: Abort
   if (res.status === 422) return []
   if (!res.ok) throw new Error(`GitHub search failed (${res.status})`)
   const data = (await res.json()) as { items?: Repo[] }
-  return Array.isArray(data.items) ? data.items : []
+  return (Array.isArray(data.items) ? data.items : []).map(repoToCard)
 }
 
-// ---- repos: detail (repo + readme paragraphs in one shape) ----
+function repoToCard(r: Repo): Card {
+  const c = kindToCat(r)
+  const signals = [{ src: 'GitHub', icon: 'star', val: `${fmtNum(r.stargazers_count)} ★` }]
+  if (r.pushed_at) signals.push({ src: 'Maintained', icon: 'clock', val: `last commit ${ago(r.pushed_at)}` })
+  return {
+    title: titleize(r.name),
+    description: r.description || 'No description provided — open the source to see what it does.',
+    type: c.cat === 'skill' ? 'skill' : 'repo',
+    repo: r.full_name,
+    tags: (r.topics || []).slice(0, 5),
+    signals,
+    score: 0, // unknown without the backend's scoring agent
+    trust: 'verified',
+    sourceLabel: 'GitHub',
+  }
+}
+
+// ---- articles (news) → enriched Cards (backend required) ----
+export async function fetchArticles(limit = 12, signal?: AbortSignal): Promise<Card[]> {
+  if (!API_BASE) throw new NoBackendError()
+  const res = await fetch(`${API_BASE}/api/articles?limit=${limit}`, { signal })
+  if (!res.ok) throw new Error(`articles failed (${res.status})`)
+  return (await res.json()) as Card[]
+}
+
+// ---- repo detail (dossier): repo + readme paragraphs ----
 export async function getRepoDetail(fullName: string, signal?: AbortSignal): Promise<RepoDetail> {
   if (API_BASE) {
     const res = await fetch(`${API_BASE}/api/repos/${fullName}`, { signal })
@@ -70,7 +96,6 @@ export async function getRepoDetail(fullName: string, signal?: AbortSignal): Pro
     if (!res.ok) throw new Error(`repo failed (${res.status})`)
     return (await res.json()) as RepoDetail
   }
-  // direct GitHub fallback: repo + best-effort README
   const res = await fetch(`${GH_REPOS}/${fullName}`, { headers: ACCEPT, signal })
   if (res.status === 404) throw new NotFoundError()
   if (ghRateLimited(res)) throw new RateLimitError()
@@ -111,15 +136,7 @@ function mdToParas(input: string): string[] {
     .slice(0, 2)
 }
 
-// ---- articles (news) — requires the backend ----
-export async function fetchArticles(limit = 12, signal?: AbortSignal): Promise<Article[]> {
-  if (!API_BASE) throw new NoBackendError()
-  const res = await fetch(`${API_BASE}/api/articles?limit=${limit}`, { signal })
-  if (!res.ok) throw new Error(`articles failed (${res.status})`)
-  return (await res.json()) as Article[]
-}
-
-// ---- formatting helpers ----
+// ---- helpers ----
 export function fmtNum(n: number): string {
   return n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1).replace(/\.0$/, '')}k` : String(n)
 }
@@ -140,6 +157,16 @@ export function titleize(name: string): string {
 
 export function kindToCat(r: Repo): Cat {
   const hay = `${r.name || ''} ${r.description || ''} ${(r.topics || []).join(' ')}`.toLowerCase()
+  return catFromText(hay)
+}
+
+// Category for a Card (drives the line-art Motif).
+export function catForCard(card: Card): CatId {
+  if (card.type === 'news') return 'web'
+  return catFromText(`${card.title} ${card.description} ${card.tags.join(' ')}`.toLowerCase()).cat
+}
+
+function catFromText(hay: string): Cat {
   if (/\bmcp\b|model context protocol/.test(hay)) return { cat: 'mcp', label: 'MCP Server' }
   if (/browser|scrape|crawl|playwright|puppeteer|web/.test(hay)) return { cat: 'web', label: 'Browser & Web' }
   if (/database|postgres|sqlite|sql|vector|duckdb/.test(hay)) return { cat: 'data', label: 'Data & DB' }

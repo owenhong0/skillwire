@@ -19,7 +19,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 import sources
 from cache import get_or_set
-from models import Article, Repo, RepoDetail
+from models import Card, RepoDetail
+from pipeline import run_pipeline
 
 load_dotenv()
 
@@ -47,12 +48,18 @@ async def health():
     return {"ok": True}
 
 
-@app.get("/api/articles", response_model=List[Article])
+@app.get("/api/articles", response_model=List[Card])
 async def articles(limit: int = Query(12, ge=1, le=40)):
-    return await get_or_set(f"articles:{limit}", NEWS_TTL, lambda: sources.aggregate_articles(limit))
+    async def build():
+        raw = await sources.aggregate_articles(limit)
+        return await run_pipeline(
+            [a.model_dump() for a in raw], "latest AI and LLM ecosystem news", "news"
+        )
+
+    return await get_or_set(f"cards:articles:{limit}", NEWS_TTL, build)
 
 
-@app.get("/api/repos/search", response_model=List[Repo])
+@app.get("/api/repos/search", response_model=List[Card])
 async def repos_search(
     section: Optional[str] = None,
     q: Optional[str] = None,
@@ -62,9 +69,14 @@ async def repos_search(
     query = query or q
     if not query:
         raise HTTPException(status_code=400, detail="provide a `section` or `q`")
-    key = f"search:{query}:{per_page}"
+    kind = "skill" if section == "skills" else "repo"
+
+    async def build():
+        raw = await sources.search_github(query, per_page)
+        return await run_pipeline([r.model_dump() for r in raw], query, kind)
+
     try:
-        return await get_or_set(key, REPO_TTL, lambda: sources.search_github(query, per_page))
+        return await get_or_set(f"cards:search:{query}:{per_page}", REPO_TTL, build)
     except sources.RateLimited:
         raise HTTPException(status_code=429, detail="GitHub rate limit reached; try again shortly")
 

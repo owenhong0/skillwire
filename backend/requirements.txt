@@ -4,3 +4,6 @@ httpx>=0.27
 feedparser>=6.0
 pydantic>=2.5
 python-dotenv>=1.0
+anthropic>=0.69
+# optional: enables WHOIS domain-age checks in trust.py (degrades gracefully if absent)
+# python-whois>=0.9

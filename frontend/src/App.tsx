@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { View, CatId, StoryRef } from './types'
+import type { View } from './types'
 import TopBar from './components/TopBar'
 import Trending from './components/Trending'
 import Discover from './components/Discover'
@@ -8,7 +8,7 @@ import StoryArticle from './components/StoryArticle'
 
 export default function App() {
   const [view, setView] = useState<View>('trending')
-  const [story, setStory] = useState<StoryRef | null>(null)
+  const [story, setStory] = useState<string | null>(null) // repo slug of the open dossier
 
   const nav = (v: View) => {
     setStory(null)
@@ -16,8 +16,8 @@ export default function App() {
     window.scrollTo(0, 0)
   }
 
-  const openStory = (repo: string, cat: CatId) => {
-    setStory({ repo, cat })
+  const openStory = (repo: string) => {
+    setStory(repo)
     window.scrollTo(0, 0)
   }
 
@@ -31,7 +31,7 @@ export default function App() {
       <TopBar view={view} onNav={nav} />
       <main className="nwrap">
         {story ? (
-          <StoryArticle repo={story.repo} cat={story.cat} onBack={back} />
+          <StoryArticle repo={story} onBack={back} />
         ) : view === 'trending' ? (
           <Trending onOpen={openStory} />
         ) : view === 'discover' ? (
@@ -42,7 +42,7 @@ export default function App() {
       </main>
       <footer className="site-foot">
         <span>
-          <b>The Skillwire Dispatch</b> — a live front page over the GitHub Search API.
+          <b>The Skillwire Dispatch</b> — live, trust-scored news + repos over public APIs.
         </span>
         <span>Every story is public activity, not an endorsement. Read the source.</span>
       </footer>
