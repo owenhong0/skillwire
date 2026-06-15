@@ -67,3 +67,32 @@ export function BackArrowIcon({ width = 13, height = 13 }: P) {
     </svg>
   )
 }
+
+// verified shield (replaces the spec's ti-shield-check)
+export function ShieldCheckIcon({ className }: P) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M11.46 3.06a1 1 0 0 1 1.08 0l6 3.5a1 1 0 0 1 .46.84V12c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V7.4a1 1 0 0 1 .46-.84z" />
+      <path d="M9 12l2 2 4-4" />
+    </svg>
+  )
+}
+
+// empty-state face (replaces the spec's ti-mood-empty)
+export function MoodEmptyIcon({ className }: P) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9 10h.01M15 10h.01M9 15h6" />
+    </svg>
+  )
+}
+
+export function CopyIcon({ width = 14, height = 14 }: P) {
+  return (
+    <svg viewBox="0 0 24 24" width={width} height={height} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <rect x="9" y="9" width="11" height="11" rx="2" />
+      <path d="M5 15V5a2 2 0 0 1 2-2h10" />
+    </svg>
+  )
+}
