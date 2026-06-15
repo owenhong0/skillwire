@@ -1,0 +1,16 @@
+name: Site Audit
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - run: npm install -g lighthouse
+      - run: chmod +x audit.sh && ./audit.sh
