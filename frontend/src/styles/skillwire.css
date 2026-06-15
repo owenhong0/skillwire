@@ -1,0 +1,94 @@
+/* ============================================================
+   Skillwire — base layer (tokens + app shell).
+   Pairs with news.css (the Open Design "Skillwire Dispatch" editorial
+   layer). This file supplies the tokens news.css expects but didn't
+   define (fonts, accent, caution) plus the topbar, buttons, footer,
+   the Discover search, and the Learn page.
+   ============================================================ */
+:root {
+  --font-body: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* brand accent — terracotta, carried over from Skillwire's identity;
+     reads well on newsprint. */
+  --accent:     #C96442;
+  --accent-ink: #A24E32;
+  /* caution (the non-negotiable "Not audited" marker) */
+  --caution-ink:  #8A4B07;
+  --caution-tint: #FBF1DE;
+  --caution-line: #E7C892;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; font-family: var(--font-body); -webkit-font-smoothing: antialiased; }
+a { color: inherit; }
+
+/* ---------- topbar ---------- */
+.topbar { position: sticky; top: 0; z-index: 30; background: var(--paper); border-bottom: 1px solid var(--rule); }
+.topbar-inner { max-width: 1180px; margin: 0 auto; padding: 12px 28px; display: flex; align-items: center; gap: 18px; }
+.brand { display: inline-flex; align-items: center; gap: 9px; text-decoration: none; color: var(--ink); }
+.brand-mark { display: grid; place-items: center; width: 30px; height: 30px; border: 1.5px solid var(--ink); border-radius: 7px; }
+.brand-mark svg { width: 18px; height: 18px; }
+.wordmark { font: 600 19px/1 var(--serif-display); letter-spacing: -0.01em; }
+.wordmark b { color: var(--accent-ink); font-weight: 600; }
+.topnav { display: flex; gap: 3px; }
+.topnav a { font: 600 12.5px/1 var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); text-decoration: none; padding: 9px 12px; border-radius: 6px; cursor: pointer; transition: color .15s, background .15s; }
+.topnav a:hover { color: var(--ink); }
+.topnav a[aria-current="page"] { color: var(--paper); background: var(--ink); }
+.spacer { flex: 1; }
+
+/* ---------- buttons ---------- */
+.btn { display: inline-flex; align-items: center; gap: 7px; font: 600 12.5px/1 var(--font-mono); letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink); background: var(--paper-2); border: 1px solid var(--rule-ink); border-radius: 8px; padding: 11px 15px; text-decoration: none; cursor: pointer; transition: background .15s, color .15s, filter .15s; }
+.btn:hover { background: var(--ink); color: var(--paper); }
+.btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn-primary:hover { filter: brightness(1.06); background: var(--accent); color: #fff; }
+
+/* ---------- footer ---------- */
+.site-foot { max-width: 1180px; margin: 44px auto 0; padding: 22px 28px 48px; border-top: 1px solid var(--rule); display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; font: 500 11.5px/1.6 var(--font-mono); color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.06em; }
+.site-foot b { color: var(--ink); }
+
+/* ---------- Discover (live keyless search) ---------- */
+.disco { padding-top: 8px; }
+.disco-search { display: flex; gap: 10px; margin: 6px 0 10px; }
+.disco-search input { flex: 1; font: 400 16px/1.2 var(--font-body); color: var(--ink); background: var(--paper-2); border: 1px solid var(--rule-ink); border-radius: 8px; padding: 14px 16px; }
+.disco-search input::placeholder { color: var(--ink-faint); }
+.disco-search input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 22%, transparent); }
+.disco-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 28px; margin-top: 6px; }
+.disco-grid .story-card { cursor: pointer; }
+
+/* ---------- Learn (visual concepts) ---------- */
+.learn-hero { margin: 8px 0 6px; }
+.learn-eyebrow { font: 600 11px/1 var(--font-mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent-ink); margin: 0 0 12px; }
+.learn-hero h1 { font: 600 clamp(34px, 6vw, 60px)/1.04 var(--serif-display); letter-spacing: -0.015em; margin: 0 0 16px; color: var(--ink); text-wrap: balance; }
+.learn-hero p { font: 400 19px/1.55 var(--serif-body); color: var(--ink-soft); max-width: 64ch; margin: 0; }
+.learn-toc { display: flex; flex-wrap: wrap; gap: 8px; margin: 24px 0 4px; }
+.learn-toc a { font: 500 12px/1 var(--font-mono); color: var(--ink-soft); background: var(--paper-2); border: 1px solid var(--rule); border-radius: 999px; padding: 7px 13px; text-decoration: none; cursor: pointer; transition: all .12s; }
+.learn-toc a:hover { color: var(--accent-ink); border-color: var(--accent); }
+.concept { border-top: 1px solid var(--rule); padding: 40px 0 8px; scroll-margin-top: 80px; }
+.concept-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 4px; }
+.concept-num { font: 500 14px/1 var(--font-mono); color: var(--accent-ink); flex: none; }
+.concept-title { font: 600 clamp(24px, 3.4vw, 33px)/1.12 var(--serif-display); letter-spacing: -0.01em; margin: 0; color: var(--ink); }
+.concept-lede { font: 400 18px/1.55 var(--serif-body); color: var(--ink-soft); margin: 8px 0 0; max-width: 66ch; }
+.concept-grid { display: grid; grid-template-columns: 1fr; gap: 24px; margin-top: 22px; align-items: start; }
+@media (min-width: 760px) { .concept-grid.split { grid-template-columns: 1fr 1fr; align-items: center; } }
+.concept-body p { font: 400 15.5px/1.65 var(--font-body); color: var(--ink); margin: 0 0 12px; }
+.concept-body strong { font-weight: 600; }
+.concept-body code { font: 400 13px/1 var(--font-mono); background: var(--paper-2); border: 1px solid var(--rule); color: var(--ink); padding: 2px 6px; border-radius: 5px; }
+.takeaway { font: 400 14.5px/1.55 var(--font-body); color: var(--ink); background: var(--paper-2); border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 8px; padding: 12px 15px; margin-top: 6px; }
+.takeaway b { color: var(--accent-ink); }
+.fig { background: var(--paper); border: 1px solid var(--rule-ink); border-radius: 4px; padding: 20px; }
+.fig svg { display: block; width: 100%; height: auto; }
+.fig-cap { font: 500 11px/1.4 var(--font-mono); letter-spacing: 0.03em; color: var(--ink-faint); margin: 12px 2px 0; text-align: center; }
+
+/* clickable elements rendered as <a>/<div> without href */
+.brand, .story-lead h2 a, .readmore, .story-card, .brief, .crumb { cursor: pointer; }
+
+/* Learn page footer note */
+.learn-footer { border-top: 1px solid var(--rule); margin-top: 44px; padding-top: 22px; font: 400 14px/1.6 var(--serif-body); color: var(--ink-faint); max-width: 70ch; }
+
+@keyframes dashflow { to { stroke-dashoffset: -22; } }
+.anim-dash { animation: dashflow 1.1s linear infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-dash, .n-sk { animation: none !important; }
+  .topnav a, .btn, .learn-toc a { transition: none; }
+}

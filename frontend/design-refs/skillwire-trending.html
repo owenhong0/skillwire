@@ -1,0 +1,166 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The Skillwire Dispatch — trending in the LLM ecosystem</title>
+<link rel="stylesheet" href="assets/skillwire.css" />
+<link rel="stylesheet" href="assets/news.css" />
+</head>
+<body class="news">
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="index.html">
+      <span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h4l2-7 3 14 2-7h3"/></svg></span>
+      <span class="wordmark">Skill<b>wire</b></span>
+    </a>
+    <nav class="topnav">
+      <a href="trending.html" aria-current="page">Trending</a>
+      <a href="app.html">Discover</a>
+      <a href="learn.html">Learn</a>
+    </nav>
+    <span class="spacer"></span>
+    <a class="btn" href="app.html">Search the catalog</a>
+  </div>
+</header>
+
+<main class="nwrap" data-od-id="dispatch">
+  <div class="masthead">
+    <div class="meta-row">
+      <span id="md-date">—</span>
+      <span>No. 001 · Live edition</span>
+    </div>
+    <h1>The Skillwire Dispatch</h1>
+    <p class="motto">All the skills that are fit to ship — we highlight, we don't audit.</p>
+    <div class="rule-double"></div>
+  </div>
+
+  <nav class="sections" id="sections" aria-label="Sections"></nav>
+
+  <div class="strap"><span id="strap-label">Front page</span><span class="grow"></span><span id="strap-count">ranked live by GitHub stars</span></div>
+
+  <div id="front"><!-- rendered live --></div>
+</main>
+
+<footer class="site-foot" style="border-color:var(--rule)">
+  <span><b>The Skillwire Dispatch</b> — a live front page over the GitHub Search API.</span>
+  <span>Every story is public activity, not an endorsement. Read the source.</span>
+</footer>
+
+<script>
+(function () {
+  function esc(s){return (s==null?"":String(s)).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+  function fmtNum(n){return n>=1000?(n/1000).toFixed(n>=10000?0:1).replace(/\.0$/,"")+"k":String(n);}
+  function ago(iso){var d=(Date.now()-new Date(iso).getTime())/86400000;if(d<1)return "today";if(d<2)return "1d ago";if(d<30)return Math.round(d)+"d ago";if(d<365)return Math.round(d/30)+"mo ago";return Math.round(d/365)+"y ago";}
+  function titleize(name){return (name||"").replace(/[-_.]/g," ").replace(/\b\w/g,function(m){return m.toUpperCase();});}
+  function MOTIF(cat){
+    var s='<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">';
+    var p={
+      skill:'<path d="M14 32h8l4-14 8 28 5-18 3 4h8"/>',
+      mcp:'<rect x="14" y="12" width="36" height="12" rx="2"/><rect x="14" y="30" width="36" height="12" rx="2"/><rect x="14" y="48" width="36" height="8" rx="2"/><circle cx="22" cy="18" r="1.6" fill="currentColor"/><circle cx="22" cy="36" r="1.6" fill="currentColor"/>',
+      web:'<rect x="10" y="14" width="44" height="34" rx="3"/><path d="M10 24h44"/><circle cx="16" cy="19" r="1.4" fill="currentColor"/><circle cx="21" cy="19" r="1.4" fill="currentColor"/><path d="M22 38h20M22 32h14"/>',
+      data:'<ellipse cx="32" cy="16" rx="18" ry="6"/><path d="M14 16v16c0 3.3 8 6 18 6s18-2.7 18-6V16"/><path d="M14 32v12c0 3.3 8 6 18 6s18-2.7 18-6V32"/>',
+      agent:'<circle cx="16" cy="32" r="7"/><circle cx="48" cy="16" r="6"/><circle cx="48" cy="32" r="6"/><circle cx="48" cy="48" r="6"/><path d="M23 32 42 16M23 32h19M23 32 42 48"/>',
+      cli:'<rect x="10" y="14" width="44" height="36" rx="3"/><path d="M18 28l8 6-8 6M30 42h12"/>'
+    };
+    return s+(p[cat]||p.skill)+'</svg>';
+  }
+  function kindToCat(r){
+    var hay=((r.name||"")+" "+(r.description||"")+" "+(r.topics||[]).join(" ")).toLowerCase();
+    if(/\bmcp\b|model context protocol/.test(hay))return {cat:"mcp",label:"MCP Server"};
+    if(/browser|scrape|crawl|playwright|puppeteer|web/.test(hay))return {cat:"web",label:"Browser & Web"};
+    if(/database|postgres|sqlite|sql|vector|duckdb/.test(hay))return {cat:"data",label:"Data & DB"};
+    if(/agent|autonomous|orchestr/.test(hay))return {cat:"agent",label:"Agent"};
+    if(/\bcli\b|command.line|terminal/.test(hay))return {cat:"cli",label:"CLI Tool"};
+    return {cat:"skill",label:"Skill"};
+  }
+  function href(r,cat){return "skill.html?repo="+encodeURIComponent(r.full_name)+"&cat="+cat;}
+
+  var SECTIONS=[
+    {id:"skills",label:"Skills",query:"claude skill"},
+    {id:"mcp",label:"MCP Servers",query:"mcp server"},
+    {id:"web",label:"Browser & Web",query:"browser automation"},
+    {id:"data",label:"Data & DB",query:"database vector"},
+    {id:"agents",label:"Agents",query:"ai agent framework"}
+  ];
+  var nav=document.getElementById("sections"), front=document.getElementById("front");
+  var strapLabel=document.getElementById("strap-label"), strapCount=document.getElementById("strap-count");
+  var active=0, seq=0;
+
+  SECTIONS.forEach(function(s,i){
+    var b=document.createElement("button"); b.textContent=s.label; b.setAttribute("aria-pressed", i===0?"true":"false");
+    b.addEventListener("click",function(){ if(i===active)return; active=i; nav.querySelectorAll("button").forEach(function(x,j){x.setAttribute("aria-pressed", j===i?"true":"false");}); load(); });
+    nav.appendChild(b);
+  });
+
+  try { var dt=new Date("2026-06-15T12:00:00"); document.getElementById("md-date").textContent = dt.toLocaleDateString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric"}); } catch(_){}
+
+  function leadHTML(r){
+    var c=kindToCat(r);
+    return '<div class="story-lead">'+
+      '<span class="kicker">'+c.label+' · Lead story</span>'+
+      '<h2><a href="'+href(r,c.cat)+'">'+esc(titleize(r.name))+'</a></h2>'+
+      '<div class="lead-visual"><div class="glyph">'+MOTIF(c.cat)+'</div><span class="cap">'+esc(r.full_name)+'</span></div>'+
+      '<p class="standfirst">'+esc(r.description||"No description provided by the author — open the source to see what it does.")+'</p>'+
+      '<div class="byline"><span><b>'+fmtNum(r.stargazers_count)+'</b> ★ stars</span><span>last commit <b>'+ago(r.pushed_at)+'</b></span>'+(r.language?'<span>'+esc(r.language)+'</span>':'')+'<span><b>'+fmtNum(r.open_issues_count)+'</b> open issues</span></div>'+
+      '<a class="readmore" href="'+href(r,c.cat)+'">Read the full story <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>'+
+    '</div>';
+  }
+  function secHTML(r){
+    var c=kindToCat(r);
+    return '<a class="story-card" href="'+href(r,c.cat)+'">'+
+      '<div class="scard-vis">'+MOTIF(c.cat)+'</div>'+
+      '<span class="kicker">'+c.label+'</span>'+
+      '<h3>'+esc(titleize(r.name))+'</h3>'+
+      '<p>'+esc((r.description||"").slice(0,120)||"Open the source for details.")+'</p>'+
+      '<div class="mini-by">'+fmtNum(r.stargazers_count)+' ★ · '+ago(r.pushed_at)+'</div>'+
+    '</a>';
+  }
+  function briefHTML(r,i){
+    var c=kindToCat(r);
+    return '<a class="brief" href="'+href(r,c.cat)+'"><span class="rank">'+(i+1)+'</span><span><div class="bt">'+esc(titleize(r.name))+'</div><div class="bd">'+esc((r.description||"").slice(0,90))+'</div><div class="bm">'+fmtNum(r.stargazers_count)+' ★ · '+esc(c.label)+'</div></span></a>';
+  }
+
+  function skeleton(){
+    front.innerHTML='<div class="front"><div class="lead">'+
+      '<div class="n-sk" style="height:16px;width:30%"></div>'+
+      '<div class="n-sk" style="height:54px;width:90%;margin-top:14px"></div>'+
+      '<div class="n-sk" style="height:200px;margin-top:18px"></div>'+
+      '<div class="n-sk" style="height:14px;width:100%;margin-top:18px"></div>'+
+      '<div class="n-sk" style="height:14px;width:80%;margin-top:8px"></div>'+
+      '</div><div class="rail">'+
+      '<div class="n-sk" style="height:14px;width:50%"></div>'+
+      '<div class="n-sk" style="height:60px;margin-top:16px"></div>'+
+      '<div class="n-sk" style="height:60px;margin-top:12px"></div>'+
+      '<div class="n-sk" style="height:60px;margin-top:12px"></div>'+
+      '</div></div>';
+  }
+
+  function render(items){
+    if(!items.length){ front.innerHTML='<div class="n-state"><h3>Nothing on the wire</h3><p>This section came back empty. Try another tab — the newsroom runs on live GitHub activity.</p></div>'; return; }
+    var lead=items[0], secondary=items.slice(1,3), briefs=items.slice(3,8);
+    var html='<div class="front"><div class="lead">'+leadHTML(lead);
+    if(secondary.length){ html+='<div class="secondary">'+secondary.map(secHTML).join("")+'</div>'; }
+    html+='</div><aside class="rail"><h4>Most starred this section</h4>'+briefs.map(briefHTML).join("")+'</aside></div>';
+    front.innerHTML=html;
+  }
+
+  function load(){
+    var mine=++seq, s=SECTIONS[active];
+    strapLabel.textContent=s.label; strapCount.textContent="searching the wire…";
+    skeleton();
+    var url="https://api.github.com/search/repositories?q="+encodeURIComponent(s.query+" in:name,description,readme")+"&sort=stars&order=desc&per_page=9";
+    fetch(url,{headers:{"Accept":"application/vnd.github+json"}})
+      .then(function(res){ if(!res.ok) throw new Error(res.status); return res.json(); })
+      .then(function(data){ if(mine!==seq)return; var items=data.items||[]; strapCount.textContent=items.length+" stories · ranked by stars"; render(items); })
+      .catch(function(){ if(mine!==seq)return; strapCount.textContent="press paused"; front.innerHTML='<div class="n-state"><h3>The presses are paused</h3><p>GitHub\'s free rate limit kicked in (no key needed — the wire is just busy). Wait a minute and refresh.</p></div>'; });
+  }
+
+  load();
+})();
+</script>
+
+</body>
+</html>

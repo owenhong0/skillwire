@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The Skillwire Dispatch — story</title>
+<link rel="stylesheet" href="assets/skillwire.css" />
+<link rel="stylesheet" href="assets/news.css" />
+</head>
+<body class="news">
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="index.html">
+      <span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h4l2-7 3 14 2-7h3"/></svg></span>
+      <span class="wordmark">Skill<b>wire</b></span>
+    </a>
+    <nav class="topnav">
+      <a href="trending.html">Trending</a>
+      <a href="app.html">Discover</a>
+      <a href="learn.html">Learn</a>
+    </nav>
+    <span class="spacer"></span>
+    <a class="btn" href="trending.html">← Front page</a>
+  </div>
+</header>
+
+<main class="nwrap">
+  <article class="article" id="article" aria-live="polite">
+    <a class="crumb" href="trending.html"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg> The Skillwire Dispatch</a>
+    <div id="body" style="margin-top:18px"></div>
+  </article>
+</main>
+
+<footer class="site-foot" style="border-color:var(--rule)">
+  <span><b>The Skillwire Dispatch</b> — live story over the GitHub API.</span>
+  <span>We highlight, we don't audit.</span>
+</footer>
+
+<script>
+(function () {
+  function esc(s){return (s==null?"":String(s)).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+  function fmtNum(n){return n>=1000?(n/1000).toFixed(n>=10000?0:1).replace(/\.0$/,"")+"k":String(n);}
+  function ago(iso){var d=(Date.now()-new Date(iso).getTime())/86400000;if(d<1)return "today";if(d<2)return "1 day ago";if(d<30)return Math.round(d)+" days ago";if(d<365)return Math.round(d/30)+" months ago";return Math.round(d/365)+" years ago";}
+  function titleize(name){return (name||"").replace(/[-_.]/g," ").replace(/\b\w/g,function(m){return m.toUpperCase();});}
+  function MOTIF(cat){
+    var s='<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">';
+    var p={skill:'<path d="M14 32h8l4-14 8 28 5-18 3 4h8"/>',mcp:'<rect x="14" y="12" width="36" height="12" rx="2"/><rect x="14" y="30" width="36" height="12" rx="2"/><rect x="14" y="48" width="36" height="8" rx="2"/><circle cx="22" cy="18" r="1.6" fill="currentColor"/><circle cx="22" cy="36" r="1.6" fill="currentColor"/>',web:'<rect x="10" y="14" width="44" height="34" rx="3"/><path d="M10 24h44"/><circle cx="16" cy="19" r="1.4" fill="currentColor"/><circle cx="21" cy="19" r="1.4" fill="currentColor"/><path d="M22 38h20M22 32h14"/>',data:'<ellipse cx="32" cy="16" rx="18" ry="6"/><path d="M14 16v16c0 3.3 8 6 18 6s18-2.7 18-6V16"/><path d="M14 32v12c0 3.3 8 6 18 6s18-2.7 18-6V32"/>',agent:'<circle cx="16" cy="32" r="7"/><circle cx="48" cy="16" r="6"/><circle cx="48" cy="32" r="6"/><circle cx="48" cy="48" r="6"/><path d="M23 32 42 16M23 32h19M23 32 42 48"/>',cli:'<rect x="10" y="14" width="44" height="36" rx="3"/><path d="M18 28l8 6-8 6M30 42h12"/>'};
+    return s+(p[cat]||p.skill)+'</svg>';
+  }
+  function catLabel(cat){return {skill:"Skill",mcp:"MCP Server",web:"Browser & Web",data:"Data & DB",agent:"Agent",cli:"CLI Tool"}[cat]||"Skill";}
+
+  function mdToParas(md){
+    if(!md) return [];
+    md=md.replace(/```[\s\S]*?```/g,"");          // code fences
+    md=md.replace(/<[^>]+>/g,"");                  // html tags
+    md=md.replace(/!\[[^\]]*\]\([^)]*\)/g,"");     // images
+    md=md.replace(/\[([^\]]+)\]\([^)]*\)/g,"$1"); // links -> text
+    md=md.replace(/^[#>\-\*\s].*$/gm,function(l){ return /^#{1,6}\s/.test(l)||/shields\.io|badge|!\[/.test(l)?"":l; });
+    md=md.replace(/[*_`>#]/g,"");
+    var blocks=md.split(/\n\s*\n/).map(function(b){return b.replace(/\s+/g," ").trim();})
+      .filter(function(b){return b.length>60 && /[a-z]/.test(b) && !/^https?:\/\//.test(b);});
+    return blocks.slice(0,2);
+  }
+
+  var box=document.getElementById("body");
+  var params=new URLSearchParams(location.search);
+  var repo=params.get("repo"), cat=params.get("cat")||"skill";
+
+  function fail(title,msg){ box.innerHTML='<div class="n-state" style="margin-top:30px"><h3>'+esc(title)+'</h3><p>'+esc(msg)+'</p><div style="margin-top:18px"><a class="btn" href="trending.html">← Back to the front page</a></div></div>'; }
+
+  function skeleton(){ box.innerHTML='<div class="n-sk" style="height:16px;width:24%;margin-top:24px"></div><div class="n-sk" style="height:60px;width:80%;margin-top:16px"></div><div class="n-sk" style="height:18px;width:60%;margin-top:18px"></div><div class="n-sk" style="height:230px;margin-top:22px"></div><div class="n-sk" style="height:16px;margin-top:22px"></div><div class="n-sk" style="height:16px;width:92%;margin-top:9px"></div><div class="n-sk" style="height:16px;width:88%;margin-top:9px"></div>'; }
+
+  function render(r, paras){
+    var topics=(r.topics||[]).slice(0,8);
+    var lic=(r.license&&r.license.spdx_id&&r.license.spdx_id!=="NOASSERTION")?r.license.spdx_id:"No license stated";
+    var body="";
+    if(paras.length){ body+='<p class="lede">'+esc(paras[0])+'</p>'; if(paras[1]) body+='<p>'+esc(paras[1])+'</p>'; }
+    else {
+      body+='<p class="lede">'+esc(r.description||(titleize(r.name)+" is a public repository in the LLM tooling ecosystem."))+'</p>';
+      body+='<p>The author hasn’t shipped a readable overview we could excerpt here, so the facts below come straight from GitHub: it’s written in '+esc(r.language||"an unspecified language")+', carries '+fmtNum(r.stargazers_count)+' stars, and was last touched '+ago(r.pushed_at)+'.</p>';
+    }
+    var quote = r.description ? '<blockquote class="pullquote">“'+esc(r.description)+'”</blockquote>' : '';
+
+    box.innerHTML=
+      '<span class="kicker a-kicker">'+esc(catLabel(cat))+' · Live dossier</span>'+
+      '<h1>'+esc(titleize(r.name))+'</h1>'+
+      '<p class="dek">'+esc(r.description||"A public project in the LLM tooling ecosystem.")+'</p>'+
+      '<div class="a-byline"><span>By <b>'+esc((r.owner&&r.owner.login)||"unknown")+'</b></span><span class="mono">'+esc(r.full_name)+'</span><span>Updated <b>'+ago(r.pushed_at)+'</b></span></div>'+
+      '<div class="a-visual"><div class="glyph">'+MOTIF(cat)+'</div></div>'+
+      '<div class="a-body">'+body+quote+'</div>'+
+      '<div class="a-sub">Why it surfaced</div>'+
+      '<div class="ev-row">'+
+        '<span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9 6.8 19.2l1-5.8L3.5 9.2l5.9-.9Z"/></svg><b>'+fmtNum(r.stargazers_count)+'</b> stars</span>'+
+        '<span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>last commit '+ago(r.pushed_at)+'</span>'+
+        '<span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4m0 4h.01"/></svg><b>'+fmtNum(r.open_issues_count)+'</b> open issues</span>'+
+        (r.language?'<span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 4-6-4-6M8 6l-4 6 4 6"/></svg>'+esc(r.language)+'</span>':'')+
+        '<span class="chip">'+esc(lic)+'</span>'+
+      '</div>'+
+      (topics.length?'<div class="a-sub">Topics</div><div class="a-tags">'+topics.map(function(t){return '<a href="app.html">#'+esc(t)+'</a>';}).join("")+'</div>':'')+
+      '<div class="a-caution"><div class="h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>Not audited</div><p>This dossier is assembled from public GitHub activity, not a security review. Read the source before you install or run anything.</p>'+
+        '<div class="a-actions"><a class="btn btn-primary" href="'+esc(r.html_url)+'" target="_blank" rel="noopener">View source on GitHub</a>'+(r.homepage?'<a class="btn" href="'+esc(r.homepage)+'" target="_blank" rel="noopener">Project site</a>':'')+'</div>'+
+      '</div>';
+    document.title="The Skillwire Dispatch — "+titleize(r.name);
+  }
+
+  if(!repo){ fail("No story selected","Open a story from the front page and it'll load here with live details."); return; }
+  skeleton();
+  var headers={"Accept":"application/vnd.github+json"};
+  fetch("https://api.github.com/repos/"+repo,{headers:headers})
+    .then(function(res){ if(res.status===404) throw new Error("404"); if(!res.ok) throw new Error(res.status); return res.json(); })
+    .then(function(r){
+      // best-effort README excerpt; never blocks the render
+      fetch("https://api.github.com/repos/"+repo+"/readme",{headers:{"Accept":"application/vnd.github.raw"}})
+        .then(function(res){ return res.ok?res.text():""; })
+        .then(function(md){ render(r, mdToParas(md)); })
+        .catch(function(){ render(r, []); });
+    })
+    .catch(function(e){
+      if(String(e.message)==="404") fail("Story not found","That repository isn't on GitHub anymore, or the name changed. Head back to the front page for what's live now.");
+      else fail("The presses are paused","GitHub's free rate limit kicked in (no key needed — the wire is just busy). Wait a minute and refresh.");
+    });
+})();
+</script>
+
+</body>
+</html>

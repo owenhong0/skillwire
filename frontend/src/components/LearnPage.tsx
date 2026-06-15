@@ -1,3 +1,4 @@
+import type { ComponentType, ReactNode } from 'react'
 import {
   NextToken,
   Tokenize,
@@ -7,11 +8,19 @@ import {
   ContextWindow,
   RAG,
   AgentLoop,
-} from './Diagrams.jsx'
+} from './Diagrams'
 
-// Plain-language explanations of the core ideas behind the tools Skillwire
-// lists. Each concept pairs a short read with a visual.
-const CONCEPTS = [
+interface Concept {
+  id: string
+  title: string
+  lede: string
+  Fig: ComponentType
+  caption: string
+  body: ReactNode
+  takeaway: string
+}
+
+const CONCEPTS: Concept[] = [
   {
     id: 'next-token',
     title: 'Models are next-token guessers',
@@ -48,8 +57,7 @@ const CONCEPTS = [
         </p>
         <p>
           Tokens are also the unit of <strong>cost and limits</strong>: pricing is per token, and a
-          model’s “context window” is measured in tokens, not words. Roughly, 1 token ≈ 4 characters
-          of English.
+          model’s context window is measured in tokens. Roughly, 1 token ≈ 4 characters of English.
         </p>
       </>
     ),
@@ -70,8 +78,7 @@ const CONCEPTS = [
         </p>
         <p>
           This is the engine behind semantic search and retrieval: instead of matching keywords, you
-          compare distances between vectors, so “car trouble” can find a doc titled “engine won’t
-          start.”
+          compare distances between vectors, so “car trouble” can find “engine won’t start.”
         </p>
       </>
     ),
@@ -87,8 +94,8 @@ const CONCEPTS = [
       <>
         <p>
           <strong>Attention</strong> is the breakthrough behind modern models. For each token, the
-          model computes how relevant every other token is, then blends them by those weights. That’s
-          how it figures out that “it” refers to “cat,” not “because.”
+          model computes how relevant every other token is, then blends them by those weights — that’s
+          how it figures out “it” refers to “cat,” not “because.”
         </p>
         <p>
           Stacking many attention layers lets the model track long-range relationships — the “T” in
@@ -109,13 +116,9 @@ const CONCEPTS = [
         <p>
           After ranking next tokens, the model has to <strong>pick one</strong>. <code>Temperature</code>{' '}
           controls how much it favors the top choice. <strong>Low</strong> (≈0.2) is focused and
-          repeatable — good for code and extraction. <strong>High</strong> (≈1.0+) is varied and
-          surprising — good for brainstorming.
+          repeatable — good for code. <strong>High</strong> (≈1.0+) is varied — good for brainstorming.
         </p>
-        <p>
-          It doesn’t add new knowledge; it only changes the odds among options the model already
-          considered.
-        </p>
+        <p>It doesn’t add new knowledge; it only changes the odds among options already considered.</p>
       </>
     ),
     takeaway: 'Same model, same prompt — temperature decides how safe or adventurous the answer is.',
@@ -129,13 +132,13 @@ const CONCEPTS = [
     body: (
       <>
         <p>
-          The <strong>context window</strong> is everything the model reads for one response: your
-          system prompt, the chat history, retrieved docs, and your question. Modern windows are huge
+          The <strong>context window</strong> is everything the model reads for one response: the
+          system prompt, the history, retrieved docs, and your question. Modern windows are huge
           (100K–1M tokens), but still finite.
         </p>
         <p>
           Go over budget and the earliest content is dropped or summarized — which is exactly why
-          retrieval (next section) and good prompting matter.
+          retrieval and good prompting matter.
         </p>
       </>
     ),
@@ -155,8 +158,8 @@ const CONCEPTS = [
           model to answer <strong>using that text</strong>.
         </p>
         <p>
-          The result is grounded, up-to-date, and citable — without retraining the model. Most of the
-          “chat with your docs / database” tools on Skillwire are RAG underneath.
+          The result is grounded, up-to-date, and citable — without retraining. Most “chat with your
+          docs” tools on Skillwire are RAG underneath.
         </p>
       </>
     ),
@@ -172,13 +175,13 @@ const CONCEPTS = [
       <>
         <p>
           An <strong>agent</strong> wraps a model in a loop with <strong>tools</strong> it can call:
-          run a query, fetch a page, edit a file. The model decides which tool to use, sees the real
-          result, and decides again — repeating until the goal is met.
+          run a query, fetch a page, edit a file. The model picks a tool, sees the real result, and
+          decides again — repeating until the goal is met.
         </p>
         <p>
           <strong>MCP</strong> (Model Context Protocol) is the standard way to expose those tools, and{' '}
-          <strong>skills</strong> are reusable instruction sets for specific tasks — both front and
-          center in Skillwire’s catalog.
+          <strong>skills</strong> are reusable instruction sets — both front and center in Skillwire’s
+          catalog.
         </p>
       </>
     ),
@@ -193,7 +196,7 @@ export default function LearnPage() {
         <p className="learn-eyebrow">Learn · the ideas behind the tools</p>
         <h1>A visual field guide to how AI actually works</h1>
         <p>
-          Skillwire lists skills, MCP servers, and libraries built on large language models. Here’s
+          The Dispatch tracks skills, MCP servers, and libraries built on large language models. Here’s
           the small set of ideas that explains nearly all of them — each in a minute, with a picture.
         </p>
       </div>
@@ -233,12 +236,8 @@ export default function LearnPage() {
       })}
 
       <p className="learn-footer">
-        These are simplified mental models, not exact mechanics — enough to read the catalog with
-        confidence. Design system adapted from{' '}
-        <a href="https://github.com/nexu-io/open-design" target="_blank" rel="noreferrer">
-          Open Design
-        </a>
-        ’s open-source “claude” brand contract. As always: we highlight, we don’t audit.
+        Simplified mental models, not exact mechanics — enough to read the catalog with confidence. We
+        highlight, we don't audit.
       </p>
     </div>
   )

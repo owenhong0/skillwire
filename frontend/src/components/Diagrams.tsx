@@ -1,26 +1,22 @@
-// Inline SVG diagrams for the Learn page, drawn in the "claude" design-system
-// palette (warm parchment, terracotta, warm neutrals). Each is self-contained
-// and scales to its container width.
+// Inline SVG diagrams for the Learn page. Drawn in a warm ink/terracotta
+// palette that sits comfortably on the Dispatch's parchment.
 
 const C = {
-  ink: '#141413',
+  ink: '#1a1814',
   soft: '#5E5D59',
   dim: '#87867F',
   terra: '#C96442',
   coral: '#D97757',
   olive: '#6B6F4E',
   sand: '#E8E6DC',
-  cream: '#F0EEE6',
-  ivory: '#FAF9F5',
-  paper: '#F5F4ED',
+  cream: '#EFE7D2',
   white: '#FFFFFF',
 }
 const MONO = "'IBM Plex Mono', ui-monospace, monospace"
 
-// ---- 1. Next-token prediction -------------------------------------------
 export function NextToken() {
   const words = ['The', 'cat', 'sat', 'on', 'the']
-  const bars = [
+  const bars: [string, number][] = [
     ['mat', 0.61],
     ['floor', 0.18],
     ['rug', 0.13],
@@ -42,7 +38,6 @@ export function NextToken() {
       })}
       <rect x={x} y={24} width={46} height={30} rx={7} fill="none" stroke={C.terra} strokeDasharray="4 4" />
       <text x={x + 23} y={45} fontFamily={MONO} fontSize="16" fill={C.terra} textAnchor="middle">?</text>
-
       {bars.map(([label, p], i) => {
         const y = 96 + i * 46
         const w = Math.round(p * 360)
@@ -59,7 +54,6 @@ export function NextToken() {
   )
 }
 
-// ---- 2. Tokenization -----------------------------------------------------
 export function Tokenize() {
   const toks = ['Skill', 'wire', ' is', ' great', '!']
   let x = 70
@@ -91,7 +85,6 @@ export function Tokenize() {
   )
 }
 
-// ---- 3. Embeddings (semantic space) -------------------------------------
 export function Embeddings() {
   const clusters = [
     { label: 'animals', color: C.olive, pts: [[120, 90], [150, 110], [108, 130], [140, 150]] },
@@ -101,7 +94,6 @@ export function Embeddings() {
   return (
     <svg viewBox="0 0 560 300" role="img" aria-label="Words placed as points in a semantic vector space">
       <rect x={40} y={28} width={480} height={236} rx={12} fill={C.white} stroke={C.cream} />
-      {/* faint axes */}
       <line x1={60} y1={250} x2={500} y2={250} stroke={C.cream} strokeWidth="1.5" />
       <line x1={60} y1={250} x2={60} y2={46} stroke={C.cream} strokeWidth="1.5" />
       {clusters.map((c) => (
@@ -112,17 +104,15 @@ export function Embeddings() {
           <text x={c.pts[0][0]} y={c.pts[0][1] - 16} fontFamily={MONO} fontSize="12.5" fill={c.color} fontWeight="600">{c.label}</text>
         </g>
       ))}
-      {/* similarity link */}
       <line x1={150} y1={110} x2={108} y2={130} stroke={C.olive} strokeWidth="2" strokeDasharray="3 3" />
       <text x={300} y={284} fontFamily={MONO} fontSize="12" fill={C.dim} textAnchor="middle">close together = similar meaning</text>
     </svg>
   )
 }
 
-// ---- 4. Attention --------------------------------------------------------
 export function Attention() {
   const toks = ['The', 'cat', 'sat', 'because', 'it', 'was', 'tired']
-  const xs = []
+  const xs: number[] = []
   let x = 18
   const boxes = toks.map((t, i) => {
     const wpx = t.length * 9 + 20
@@ -133,11 +123,10 @@ export function Attention() {
     return b
   })
   const itX = xs[4]
-  // weighted links from "it" to earlier tokens
-  const links = [
-    [1, 5], // cat (strong)
-    [6, 3], // tired
-    [2, 1.4], // sat
+  const links: [number, number][] = [
+    [1, 5],
+    [6, 3],
+    [2, 1.4],
   ]
   return (
     <svg viewBox="0 0 560 210" role="img" aria-label="The word it attends most strongly to cat">
@@ -150,25 +139,15 @@ export function Attention() {
         const tx = xs[target]
         const midY = 70 - (k + 1) * 6
         return (
-          <path
-            key={k}
-            d={`M${itX} 120 C ${itX} ${midY}, ${tx} ${midY}, ${tx} 96`}
-            fill="none"
-            stroke={C.terra}
-            strokeWidth={w}
-            opacity={0.4 + w * 0.09}
-            markerEnd="url(#at-arr)"
-          />
+          <path key={k} d={`M${itX} 120 C ${itX} ${midY}, ${tx} ${midY}, ${tx} 96`} fill="none" stroke={C.terra} strokeWidth={w} opacity={0.4 + w * 0.09} markerEnd="url(#at-arr)" />
         )
       })}
       {boxes.map((b) => {
         const isIt = b.i === 4
         return (
           <g key={b.i}>
-            <rect x={b.x} y={96} width={b.wpx} height={34} rx={8}
-              fill={isIt ? C.terra : C.white} stroke={isIt ? C.terra : C.cream} />
-            <text x={b.cx} y={118} fontFamily={MONO} fontSize="13.5"
-              fill={isIt ? C.ivory : C.ink} textAnchor="middle">{b.t}</text>
+            <rect x={b.x} y={96} width={b.wpx} height={34} rx={8} fill={isIt ? C.terra : C.white} stroke={isIt ? C.terra : C.cream} />
+            <text x={b.cx} y={118} fontFamily={MONO} fontSize="13.5" fill={isIt ? C.white : C.ink} textAnchor="middle">{b.t}</text>
           </g>
         )
       })}
@@ -178,8 +157,7 @@ export function Attention() {
   )
 }
 
-// ---- 5. Temperature & sampling ------------------------------------------
-function MiniBars({ x, title, probs, accent }) {
+function MiniBars({ x, title, probs, accent }: { x: number; title: string; probs: number[]; accent: string }) {
   const base = 150
   return (
     <g>
@@ -208,7 +186,6 @@ export function Temperature() {
   )
 }
 
-// ---- 6. Context window ---------------------------------------------------
 export function ContextWindow() {
   const n = 18
   const winStart = 9
@@ -218,13 +195,9 @@ export function ContextWindow() {
         const inWin = i >= winStart
         const bx = 20 + i * 29
         return (
-          <rect key={i} x={bx} y={70} width={24} height={30} rx={5}
-            fill={inWin ? '#F6E7DF' : C.sand}
-            stroke={inWin ? '#EAC6B6' : C.cream}
-            opacity={inWin ? 1 : 0.35 + i * 0.04} />
+          <rect key={i} x={bx} y={70} width={24} height={30} rx={5} fill={inWin ? '#F6E7DF' : C.sand} stroke={inWin ? '#EAC6B6' : C.cream} opacity={inWin ? 1 : 0.35 + i * 0.04} />
         )
       })}
-      {/* window bracket */}
       <rect x={20 + winStart * 29 - 4} y={58} width={(n - winStart) * 29} height={54} rx={9} fill="none" stroke={C.terra} strokeWidth="2" />
       <text x={20 + winStart * 29 + ((n - winStart) * 29) / 2 - 4} y={132} fontFamily={MONO} fontSize="12" fill={C.terra} textAnchor="middle" fontWeight="600">context window — what the model can see</text>
       <text x={20} y={44} fontFamily={MONO} fontSize="11.5" fill={C.dim}>← older tokens fall out of view</text>
@@ -233,8 +206,7 @@ export function ContextWindow() {
   )
 }
 
-// ---- 7. RAG --------------------------------------------------------------
-function Box({ x, y, w, h, fill, stroke, label, sub, color }) {
+function Box({ x, y, w, h, fill, stroke, label, sub, color }: { x: number; y: number; w: number; h: number; fill: string; stroke: string; label: string; sub?: string; color: string }) {
   return (
     <g>
       <rect x={x} y={y} width={w} height={h} rx={10} fill={fill} stroke={stroke} />
@@ -254,8 +226,7 @@ export function RAG() {
       <Box x={16} y={90} w={104} h={50} fill={C.white} stroke={C.cream} label="Question" color={C.ink} />
       <path d="M120 115 L150 115" stroke={C.dim} strokeWidth="2" markerEnd="url(#rag-arr)" />
       <Box x={150} y={90} w={110} h={50} fill="#ECEDDF" stroke="#D4D6BE" label="Retrieve" sub="search your docs" color="#54583B" />
-      {/* doc store */}
-      <rect x={150} y={20} width={110} height={42} rx={9} fill={C.ivory} stroke={C.cream} />
+      <rect x={150} y={20} width={110} height={42} rx={9} fill={C.cream} stroke={C.cream} />
       <text x={205} y={46} fontFamily={MONO} fontSize="12" fill={C.soft} textAnchor="middle">📄 your docs</text>
       <path d="M205 62 L205 88" stroke={C.dim} strokeWidth="2" markerEnd="url(#rag-arr)" />
       <path d="M260 115 L290 115" stroke={C.dim} strokeWidth="2" markerEnd="url(#rag-arr)" />
@@ -267,7 +238,6 @@ export function RAG() {
   )
 }
 
-// ---- 8. Agent loop -------------------------------------------------------
 export function AgentLoop() {
   return (
     <svg viewBox="0 0 560 260" role="img" aria-label="An agent loop: model calls a tool, reads the result, repeats">
@@ -279,12 +249,10 @@ export function AgentLoop() {
       <Box x={210} y={20} w={140} h={52} fill="#F6E7DF" stroke="#EAC6B6" label="Model" sub="decides next step" color={C.terra} />
       <Box x={360} y={120} w={150} h={52} fill={C.white} stroke={C.cream} label="Tool call" sub="search · run · fetch" color={C.ink} />
       <Box x={210} y={196} w={140} h={48} fill="#ECEDDF" stroke="#D4D6BE" label="Reads result" color="#54583B" />
-      <Box x={36} y={120} w={150} h={52} fill={C.ivory} stroke={C.cream} label="Final answer" sub="when done" color={C.ink} />
-      {/* clockwise loop */}
+      <Box x={36} y={120} w={150} h={52} fill={C.cream} stroke={C.cream} label="Final answer" sub="when done" color={C.ink} />
       <path d="M350 52 C 430 60, 450 95, 440 118" fill="none" stroke={C.terra} strokeWidth="2.5" markerEnd="url(#ag-arr)" />
       <path d="M420 172 C 410 205, 360 215, 352 218" fill="none" stroke={C.terra} strokeWidth="2.5" markerEnd="url(#ag-arr)" />
       <path d="M278 196 C 270 150, 270 120, 280 74" fill="none" stroke={C.terra} strokeWidth="2.5" strokeDasharray="6 5" markerEnd="url(#ag-arr)" className="anim-dash" />
-      {/* exit to answer */}
       <path d="M210 150 L188 146" stroke={C.dim} strokeWidth="2" markerEnd="url(#ag-arr)" />
       <text x={295} y={150} fontFamily={MONO} fontSize="11" fill={C.dim} textAnchor="middle">loop until</text>
       <text x={295} y={164} fontFamily={MONO} fontSize="11" fill={C.dim} textAnchor="middle">solved</text>
